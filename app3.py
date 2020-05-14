@@ -89,12 +89,12 @@ def choose_features(data):
             left, right = split_data(data, i, split)
 
             if len(left) != 0:
-                for i in left[0]:
-                    left_list.append(i)
-                print(left_list)
+                for left_value in left[0]:
+                    left_list.append(left_value)
             if len(right) != 0:
-                for j in right[0]:
-                    right_list.append(j)
+                for right_value in right[0]:
+                    right_list.append(right_value)
+
             left_pro = float(len(left_list) / len(data))
             right_pro = float(len(right_list) / len(data))
             gini_gain += left_pro * gini_index(left_list)
@@ -121,6 +121,7 @@ def tree(data, ratings):
             if rating not in rating_count.keys(): 
                 rating_count[rating] = 0
             rating_count[rating] += 1
+            
         sorted_rating_count = sorted(rating_count.iteritems(), key=operator.itemgetter(1), reverse=True)
         return sorted_rating_count[0][0]
 
