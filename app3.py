@@ -1,7 +1,5 @@
 import csv
 from itertools import combinations
-import numpy as np
-import random
 
 train_file = 'train.csv'
 train_data = []
@@ -21,11 +19,7 @@ for features in train_data:
     features.remove(features[0])
     features.remove(features[1])
 
-train_data = np.array(train_data)
-train_header = np.array(train_header)
-# print(train_data.shape)
-# print(train_header.shape)
-print(train_data[:])
+# print(train_data[:])
 
 def features_com(features):
     combinations_list = []
@@ -46,7 +40,7 @@ def gini_index(data):
             feature_values[value] += 1
     for values in feature_values.keys():
         pro = float(feature_values[values]) / count
-        gini -= pro^2
+        gini -= pro ** 2
     return gini
 
 def split_data(data, column, value):
@@ -78,6 +72,8 @@ def choose_features(data):
     unique_features = {}
     unique_value = []
     gini_max = 1
+    left_list = []
+    right_list = []
 
     for i in range(len(data[0])):
         unique_features = unique_counts(data[i])
@@ -85,11 +81,20 @@ def choose_features(data):
             if value not in unique_value:
                 unique_value.append(value)
 
+        # print(features_com(unique_value))
         for split in features_com(unique_value):
             if len(split) == 1:
                 continue
 
-            left_list, right_list = split_data(data, i, split)
+            left, right = split_data(data, i, split)
+
+            if len(left) != 0:
+                for i in left[0]:
+                    left_list.append(i)
+                print(left_list)
+            if len(right) != 0:
+                for j in right[0]:
+                    right_list.append(j)
             left_pro = float(len(left_list) / len(data))
             right_pro = float(len(right_list) / len(data))
             gini_gain += left_pro * gini_index(left_list)
@@ -112,6 +117,7 @@ def tree(data, ratings):
 
         for rating in real_rating:
 
+            # how to improve?
             if rating not in rating_count.keys(): 
                 rating_count[rating] = 0
             rating_count[rating] += 1
@@ -133,7 +139,6 @@ my_tree = tree(train_data[:1516], real_rating)
 print(12)
 print(my_tree)
 print(123)
-
 
 
             
