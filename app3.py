@@ -64,15 +64,12 @@ def choose_features(data_list):
     choose_split = None
     gini_max = 1
 
-    for j in range(len(data_list)):
+    for i in range(len(data_list[0])-1):
         feature_list = []
-        for feature in data_list:
-            feature_list.append(feature[j])
-    for i in range(len(data_list[0])):
         unique_feature = []
-    
-        if feature[i] not in unique_feature:
-            unique_feature.append(feature[i])
+        
+        feature_list = [features[i] for features in data_list]
+        unique_feature = list(set(feature_list))
         
         for split in features_com(unique_feature):
             gini_gain = 0
@@ -130,6 +127,6 @@ def tree(data_list, features_label):
 
 
 variable(train_data[:5])
-print(train_data[:5])
+# print(train_data[:5])
 my_tree = tree(train_data[:5], train_header)
 print(my_tree)
