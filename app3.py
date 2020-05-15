@@ -23,80 +23,64 @@ for features in train_data:
 
 def features_com(features):
     combinations_list = []
-    for i in range(1,len(train_data)+1):
+    for i in range(1,len(features)):
         pos_combinations = list(combinations(features, len(features[0:i])))
         combinations_list.extend(pos_combinations)
     features_combinations = zip(combinations_list[0:int(len(combinations_list)/2)], combinations_list[len(combinations_list)-1:int(len(combinations_list)/2)-1:-1])
-    return combinations_list
+    return features_combinations
 
 def gini_index(data):
-    count = len(data)
+    less, larger = data
     gini = 1
-    feature_values = {}
-    for value in data:
-        if value not in feature_values.keys():
-            feature_values[value] = 1
-        else:
-            feature_values[value] += 1
-    for values in feature_values.keys():
-        pro = float(feature_values[values]) / count
+    for less_value in less:
+        pro = len(less) / (len(less)+len(larger))
+        gini -= pro ** 2
+    for larger_value in larger:
+        pro = len(larger) / (len(less)+len(larger))
         gini -= pro ** 2
     return gini
-
-def split_data(data, column, value):
-    left_list = []
-    right_list = []
-    split_list = []
-    for rows in data:
-        for values in value:
-            if rows[column] == values:
-                left_list = data[:column]
-                right_list = data[column+1:]
     
-    return left_list, right_list
 
-def unique_counts(rows):
-    results = {}
-    for row in rows:
-        r = row[-1]
-        if r not in results:
-            results[r] = 1
-        else:
-            results[r] += 1
-    return results
+def split_data(data_list, column, value):
+    less_list = []
+    larger_list = []
+    
+    for i in range(len(data_list)):
+        if data_list[i][column] in value:
+            if float(real_rating[i]) <= 4.5:
+                less_list.append(data_list[i][column])
+            else:
+                larger_list.append(data_list[i][column])
+    
+    return less_list, larger_list
 
-def choose_features(data):
+
+def choose_features(data_list):
     choose_feature_index = 0
     choose_split = None
-    gini_gain = 0
-    unique_features = {}
-    unique_value = []
     gini_max = 1
-    left_list = []
-    right_list = []
 
-    for i in range(len(data[0])):
-        unique_features = unique_counts(data[i])
-        for value in unique_features.keys():
-            if value not in unique_value:
-                unique_value.append(value)
-
-        # print(features_com(unique_value))
-        for split in features_com(unique_value):
+    for i in range(len(data_list[0])):
+        feature_list = []
+        unique_feature = []
+        for app in data_list:
+            feature_list.append(app[i])
+            if app[i] not in unique_feature:
+                unique_feature.append(app[i])
+        
+        for split in features_com(unique_feature):
+            gini_gain = 0
             if len(split) == 1:
                 continue
 
-            left, right = split_data(data, i, split)
+            left, right = split
+            left_list = []
+            right_list = []
+            left_list = split_data(data_list, i, left)
+            right_list = split_data(data_list, i, right)
 
-            if len(left) != 0:
-                for left_value in left[0]:
-                    left_list.append(left_value)
-            if len(right) != 0:
-                for right_value in right[0]:
-                    right_list.append(right_value)
-
-            left_pro = float(len(left_list) / len(data))
-            right_pro = float(len(right_list) / len(data))
+            left_pro = float(len(left_list[0]+left_list[1]) / len(feature_list))
+            right_pro = float(len(right_list[0]+right_list[1]) / len(feature_list))
             gini_gain += left_pro * gini_index(left_list)
             gini_gain += right_pro * gini_index(right_list)
 
@@ -108,8 +92,9 @@ def choose_features(data):
 
 
 
-def tree(data, ratings):
-    best_feature_index, best_split = choose_features(data)
+def tree(data_list, ratings):
+    
+    best_feature_index, best_split = choose_features(data_list)
     best_feature_rating = ratings[best_feature_index]
 
     if best_feature_index == -1:
@@ -121,7 +106,7 @@ def tree(data, ratings):
             if rating not in rating_count.keys(): 
                 rating_count[rating] = 0
             rating_count[rating] += 1
-            
+
         sorted_rating_count = sorted(rating_count.iteritems(), key=operator.itemgetter(1), reverse=True)
         return sorted_rating_count[0][0]
 
@@ -136,11 +121,11 @@ def tree(data, ratings):
 
     return decision_tree
 
-my_tree = tree(train_data[:1516], real_rating)
+print(train_data[:5])
+my_tree = tree(train_data[:5], real_rating)
 print(12)
 print(my_tree)
 print(123)
-
 
             
 
