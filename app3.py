@@ -11,13 +11,17 @@ with open(train_file) as csvfile:
 
 train_data = [[x for x in row] for row in train_data]
 
-real_rating = []
-features_label = []
-for features in train_data:
-    features_label.append(features[0])
-    real_rating.append(features[2])
-    features.remove(features[0])
-    features.remove(features[1])
+
+def variable(train_data):
+    global app_label
+    global real_rating
+    app_label = []
+    real_rating = []
+    for features in train_data:
+        app_label.append(features[0])
+        real_rating.append(features[2])
+        features.remove(features[0])
+        features.remove(features[1])
 
 # print(train_data[:])
 
@@ -60,13 +64,15 @@ def choose_features(data_list):
     choose_split = None
     gini_max = 1
 
-    for i in range(len(data_list[0])):
+    for j in range(len(data_list)):
         feature_list = []
+        for feature in data_list:
+            feature_list.append(feature[j])
+    for i in range(len(data_list[0])):
         unique_feature = []
-        for app in data_list:
-            feature_list.append(app[i])
-            if app[i] not in unique_feature:
-                unique_feature.append(app[i])
+    
+        if feature[i] not in unique_feature:
+            unique_feature.append(feature[i])
         
         for split in features_com(unique_feature):
             gini_gain = 0
@@ -92,10 +98,10 @@ def choose_features(data_list):
 
 
 
-def tree(data_list, ratings):
+def tree(data_list, features_label):
     
     best_feature_index, best_split = choose_features(data_list)
-    best_feature_rating = ratings[best_feature_index]
+    best_feature = features_label[best_feature_index]
 
     if best_feature_index == -1:
         rating_count={}
@@ -110,24 +116,20 @@ def tree(data_list, ratings):
         sorted_rating_count = sorted(rating_count.iteritems(), key=operator.itemgetter(1), reverse=True)
         return sorted_rating_count[0][0]
 
-    decision_tree = {best_feature_index:{}}
-    best_feature_values = [rows[best_feature_index] for rows in data]
+    decision_tree = {best_feature:{}}
+    best_feature_values = [rows[best_feature_index] for rows in data_list]
     best_feature_values = list(set(best_feature_values))
 
+    best_split = best_split[0][0]+best_split[0][1], best_split[1][0]+best_split[1][1]
     for value in best_split:
-        if len(value) < 2:
-            del(ratings[best_feature_index])
-        decision_tree[best_feature_rating][value] = tree(split_data(data, best_feature_index, value), ratings)
+        if len(value) <= 1:
+            del(features_label[best_feature_index])
+        decision_tree[best_feature][value] = tree(split_data(data_list, best_feature_index, value), features_label)
 
     return decision_tree
 
+
+variable(train_data[:5])
 print(train_data[:5])
-my_tree = tree(train_data[:5], real_rating)
-print(12)
+my_tree = tree(train_data[:5], train_header)
 print(my_tree)
-print(123)
-
-            
-
-
-
