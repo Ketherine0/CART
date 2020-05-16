@@ -174,16 +174,17 @@ def test(data, tree):
             candi = data[col]
         if isinstance(value, int) or isinstance(value, float):
             if type(candi) == str:
-                test(data, tree.left)
+                result = test(data, tree.left)
             elif candi > value:
-                test(data, tree.left)
+                result = test(data, tree.left)
             else:
-                test(data, tree.right)
+                result = test(data, tree.right)
         else:
             if candi == value:
-                test(data, tree.left)
+                result = test(data, tree.left)
             else:
-                test(data, tree.right)
+                result = test(data, tree.right)
+        return result
     else:
         true = tree.result[True]
         false = tree.result[False]
