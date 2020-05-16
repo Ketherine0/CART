@@ -9,3 +9,4 @@ def openFile(fileName):
         rows.append(line)
     rows.pop(0)
     return rows
+# 啊啊啊list index out of range
