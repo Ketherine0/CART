@@ -11,13 +11,14 @@ with open("train.csv",'r',errors = "ignore") as handle:
 
 class Node:
     """ Node stores feature and feature value """
-    def __init__(self, value = None, col = None, left = None, right = None, result = None, data = None):
+    def __init__(self, value = None, col = None, left = None, right = None, result = None, data = None, wrong = 0):
         self.col = col # index of feature 
         self.value = value # true value
         self.left = left # True
         self.right = right # False
         self.result = result # if it's the last then result
         self.data = data # if it is the last 
+        self.wrong = wrong
 
 def divData(rows, col, value): # rows are data; col is number col of feature; value is 分类标准
     """ Divide Data according to value """
@@ -127,13 +128,87 @@ def createTree(rows, isUsed = [False]*13):
         isUsed[best_criteria[0]] = True
         left = createTree(best_set[0], isUsed.copy())
         right = createTree(best_set[1], isUsed.copy())
-        print(best_criteria)
-        return Node(value = best_criteria[1], col = best_criteria[0], left = left, right = right)
+        wrong = left.wrong + right.wrong 
+        print(best_criteria, wrong)
+        return Node(value = best_criteria[1], col = best_criteria[0], left = left, right = right, wrong = wrong)
     else:
-        print(countLabel(rows))
-        return Node(result = countLabel(rows), data = rows)
+        result = countLabel(rows)
+        small = result[True]
+        if result[False] < small:
+            small = result[False]
+        wrong = small / total_len
+        print(countLabel(rows),wrong)
+        return Node(result = countLabel(rows), data = rows, wrong = wrong)
 
 # e.g.:Shoot Hunter-Gun Killer,GAME,4.3,320334,27M,"50,000,000+",Free,0,Teen,Action,8-Aug-18,1.1.2,4.1 and up
 # e.g.: [name,category,Android.Ver,Reviews,Size,Installs,Type,Price,Content.Rating,Genres,Last.Updated,Current.Ver,Rating]
-my_tree = createTree(rows)
+total_len = len(rows[:6072])
+my_tree = createTree(rows[:6072])
 print(my_tree)
+print("wrong rate: ", my_tree.wrong)
+
+with open("test.csv", "r", errors = "ignore") as new_handle:
+    lines = csv.reader(new_handle)
+    reads = list()
+    for line in lines:
+        line[2],line[-1] = line[-1],line[2]
+        reads.append(line)
+    reads.pop(0)
+
+def test(data, tree):
+    if tree.result is None:
+        col = tree.col
+        value = tree.value
+        try:
+            if col == 3:
+                candi = eval(data[col]) 
+            # for size, strip "M" or "K"
+            elif col == 4:
+                candi = eval(data[col].strip("MK"))
+            # for price, strip "$"
+            elif col == 7:
+                candi = eval(data[col].lstrip("$"))
+            else:
+                candi = data[col]
+        except:
+            candi = data[col]
+        if isinstance(value, int) or isinstance(value, float):
+            if type(candi) == str:
+                test(data, tree.left)
+            elif candi > value:
+                test(data, tree.left)
+            else:
+                test(data, tree.right)
+        else:
+            if candi == value:
+                test(data, tree.left)
+            else:
+                test(data, tree.right)
+    else:
+        true = tree.result[True]
+        false = tree.result[False]
+        if true >= false:
+            return True
+        else:
+            return False
+correct = 0
+fault = 0
+for data in reads:
+    result = test(data, my_tree)
+    try:
+        if eval(data[-1]) > 4.5:
+            answer = True
+        else:
+            answer = False
+        if answer ==  result:
+            correct += 1
+            print("correct")
+        else:
+            fault += 1
+            print("wrong")
+    except:
+        pass
+accuracy = correct / (correct + fault) * 100
+print(correct, fault)
+print("The accuracy is ", accuracy)
+      
