@@ -125,8 +125,8 @@ def createTree(rows, isUsed = [False]*13):
                     best_set = (set1, set2)
     if best_gain > 0:
         isUsed[best_criteria[0]] = True
-        left = createTree(best_set[0], isUsed)
-        right = createTree(best_set[1], isUsed)
+        left = createTree(best_set[0], isUsed.copy())
+        right = createTree(best_set[1], isUsed.copy())
         print(best_criteria)
         return Node(value = best_criteria[1], col = best_criteria[0], left = left, right = right)
     else:
