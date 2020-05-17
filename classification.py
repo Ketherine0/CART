@@ -1,4 +1,3 @@
-import csv
 class Node:
     """ Node stores feature column, feature value, and some data """
 
@@ -50,37 +49,27 @@ class Node:
         return copy
 
 
-# def openFile(fileName):
-#     """ Open the file """
-#     rows = list()
-#     new_list = list()
-#     csvfile = open(fileName, 'r', errors="ignore")
-#     for strline in csvfile.readlines():
-#         # Manipulate the "Installs" feature
-#         strline = strline.replace('",', '*')
-#         strline = strline.replace(',"', '*')
-#         listline = strline.strip().split('*')
-#         for index, element in enumerate(listline):
-#             element = element.strip('"')
-#             new_list.append(element)
-#         # Exchange the "Rating" and "Android.Ver" to put the label in the last position
-#         new_list[2], new_list[-1] = new_list[-1], new_list[2]
-#         rows.append(new_list)
-#         new_list = []
-#     # Pop out the header
-#     rows.pop(0)
-#     return rows
-
 def openFile(fileName):
     """ Open the file """
-    with open(fileName,'r',errors = "ignore") as handle:
-        lines = csv.reader(handle)
-        rows = list()
-        for line in lines:
-            line[2],line[-1] = line[-1],line[2]
-            rows.append(line)
-        rows.pop(0)
+    rows = list()
+    new_list = list()
+    csvfile = open(fileName, 'r')
+    for strline in csvfile.readlines():
+        # Manipulate the "Installs" feature
+        strline = strline.replace('",', '*')
+        strline = strline.replace(',"', '*')
+        listline = strline.strip().split('*')
+        for index, element in enumerate(listline):
+            element = element.strip('"')
+            new_list.append(element)
+        # Exchange the "Rating" and "Android.Ver" to put the label in the last position
+        new_list[2], new_list[-1] = new_list[-1], new_list[2]
+        rows.append(new_list)
+        new_list = []
+    # Pop out the header
+    rows.pop(0)
     return rows
+
 
 def divData(rows, col, value):
     """ Divide Data according to value """
@@ -110,7 +99,7 @@ def divData(rows, col, value):
                 else:
                     set2.append(row)
             except:
-                pass  # whether to ???
+                set1.append(row)  # whether to ???
         # If split value is string, compare it with feature value
         else:
             # if feature value is equal to split feature value, add row to left branch
@@ -132,7 +121,7 @@ def countLabel(rows):
         try:
             result[eval(row[-1]) > 4.5] += 1
         except:
-            pass  # whether??????
+            result[False] += 1
     return result
 
 
@@ -187,12 +176,8 @@ def divValue(rows, col):
     return col_value
 
 
-def createTree(rows, isUsed=[False]*13):
+def createTree(rows, total_len, isUsed=[False]*13):
     """ Create CART Tree """
-    if len(rows) == 0:
-        print("empty node")
-        return Node()
-    # Current gini index
     current_gain = Gini(rows)
     column_length = len(rows[0])
     row_length = len(rows)
@@ -224,9 +209,9 @@ def createTree(rows, isUsed=[False]*13):
     if best_gain > 0:
         isUsed[best_criteria[0]] = True
         # Left branch continue to create tree
-        left = createTree(best_set[0], isUsed.copy())
+        left = createTree(best_set[0], total_len, isUsed.copy())
         # Right branch continue to create tree
-        right = createTree(best_set[1], isUsed.copy())
+        right = createTree(best_set[1], total_len, isUsed.copy())
         # compute the current erro rate
         current = countLabel(rows)
         small = current[True]
@@ -270,7 +255,7 @@ def calcAlphaList(tree):
     if isLeaf(tree):
         return
     # If it's not a leave node,  compute alpha of every node
-    costNotSplit = tree.chaos 
+    costNotSplit = tree.chaos
     costSplit = tree.wrong
     alpha = (costNotSplit-costSplit)/(tree.leave-1)
     tree.alpha = alpha
@@ -295,7 +280,6 @@ def cut(tree, alpha):
 def pruning(tree):
     """ Pruning the tree and get a tree list """
     i = 0
-    print('i=', i, tree)
     tree_list = []
     # Cut the branches until the tree only has a root node
     while not isLeaf(tree):
@@ -305,12 +289,10 @@ def pruning(tree):
         # Update the minimum alpha
         calcAlphaList(tree)
         i += 1
-        print('i=', i, 'alpha', calcAlphaList.best_alpha)
         # Cut the branches according to alpha
         cut(tree, calcAlphaList.best_alpha)
         # Add the tree to tree_list
         tree_list.append(tree.copy())
-        print(tree)
     return tree_list
 
 
@@ -320,7 +302,7 @@ def validation(validation, tree_list):
     # Compare accuracy to get the best tree
     best_accuracy = 0
     accuracy_list = list()
-    #Traverse every tree in the tree list
+    # Traverse every tree in the tree list
     for tree in tree_list:
         # Test the tree to get the accuracy
         accuracy = finalTest(validation, tree)
@@ -406,22 +388,3 @@ def finalTest(datasets, tree):
             pass
     accuracy = correct / (correct + fault) * 100
     return accuracy
-
-
-train_data = openFile("train.csv")
-total_len = len(train_data[:6072])
-my_tree = createTree(train_data[:6072])
-print(my_tree)
-print("wrong rate: ", my_tree.wrong)
-test_data = openFile("test.csv")
-accuracy = finalTest(test_data, my_tree)
-print(accuracy)
-accuracy = finalTest(test_data, my_tree)
-print("The original final accuracy is :", accuracy)
-tree_list = pruning(my_tree)
-print("they are trees:", tree_list)
-best_tree, best_accuracy, accuracy_list = validation(train_data[6072:], tree_list)
-print("The best tree:", best_tree, best_accuracy)
-print(accuracy_list)
-accuracy = finalTest(test_data, best_tree)
-print("The final accuracy is :", accuracy)
